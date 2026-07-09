@@ -5,11 +5,12 @@ from goal import Goal
 from obstacles import Capsicum, NannyObstacle, MomObstacle, RandomObstacle
 
 # Each level: goal movement type + list of obstacle specs (type, count).
-# Levels 1-2 are the easiest (one obstacle, static goal), 3-4 stay easy
-# while introducing the rest of the obstacle types, 5-6 add slow goal
-# wandering, 7-8 speed that wander up, and 9-10 are the most crowded -
-# still beatable since speeds are capped low (see LEVEL_SPEED_SCALE) and
-# every corridor stays wide (see maze.py's per-level layouts).
+#
+# 1-7: only two obstacle types (capsicum + nanny), just growing in count as
+# the maze (see maze.py) gets a bit more spacious level to level - still a
+# corridor shape, never a full rectangle.
+# 8-10: mom joins in force (2-3 of her chasing at once) inside a fully open
+# rectangular arena - this is the hard tier.
 LEVELS = {
     1: {
         "goal_movement": "static",
@@ -27,71 +28,60 @@ LEVELS = {
     3: {
         "goal_movement": "static",
         "obstacles": [
-            {"type": "capsicum", "count": 1},
-            {"type": "nanny", "count": 1},
-            {"type": "mom", "count": 1},
+            {"type": "capsicum", "count": 2},
+            {"type": "nanny", "count": 2},
         ],
     },
     4: {
         "goal_movement": "static",
         "obstacles": [
             {"type": "capsicum", "count": 2},
-            {"type": "nanny", "count": 1},
-            {"type": "mom", "count": 1},
-            {"type": "random", "count": 1},
+            {"type": "nanny", "count": 3},
         ],
     },
     5: {
         "goal_movement": "wander_slow",
         "obstacles": [
-            {"type": "capsicum", "count": 2},
-            {"type": "nanny", "count": 1},
-            {"type": "mom", "count": 1},
-            {"type": "random", "count": 1},
+            {"type": "capsicum", "count": 3},
+            {"type": "nanny", "count": 3},
         ],
     },
     6: {
         "goal_movement": "wander_slow",
         "obstacles": [
-            {"type": "capsicum", "count": 2},
-            {"type": "nanny", "count": 2},
-            {"type": "mom", "count": 1},
-            {"type": "random", "count": 1},
+            {"type": "capsicum", "count": 3},
+            {"type": "nanny", "count": 4},
         ],
     },
     7: {
         "goal_movement": "wander_medium",
         "obstacles": [
-            {"type": "capsicum", "count": 2},
-            {"type": "nanny", "count": 2},
-            {"type": "mom", "count": 2},
-            {"type": "random", "count": 1},
+            {"type": "capsicum", "count": 4},
+            {"type": "nanny", "count": 4},
         ],
     },
     8: {
         "goal_movement": "wander_medium",
         "obstacles": [
             {"type": "capsicum", "count": 3},
-            {"type": "nanny", "count": 2},
+            {"type": "nanny", "count": 3},
             {"type": "mom", "count": 2},
-            {"type": "random", "count": 2},
         ],
     },
     9: {
         "goal_movement": "wander_medium",
         "obstacles": [
             {"type": "capsicum", "count": 3},
-            {"type": "nanny", "count": 2},
-            {"type": "mom", "count": 2},
-            {"type": "random", "count": 2},
+            {"type": "nanny", "count": 3},
+            {"type": "mom", "count": 3},
         ],
     },
     10: {
         "goal_movement": "wander_medium",
         "obstacles": [
-            {"type": "capsicum", "count": 3},
-            {"type": "nanny", "count": 3},
-            {"type": "mom", "count": 2},
+            {"type": "capsicum", "count": 4},
+            {"type": "nanny", "count": 4},
+            {"type": "mom", "count": 3},
             {"type": "random", "count": 2},
         ],
     },

@@ -42,52 +42,41 @@ LAYOUTS = {
         pygame.Rect(220, 270, 180, 310),
         START_ROOM,
     ],
-    # Levels 5-6: goal starts wandering - single-bend shapes, different jogs.
+    # Levels 5-6: goal starts wandering - still a single bend, but the
+    # corridor keeps widening so the maze feels progressively roomier.
     5: [
         GOAL_ROOM,
-        pygame.Rect(140, 190, 620, 140),
-        pygame.Rect(140, 190, 180, 370),
+        pygame.Rect(140, 190, 620, 170),
+        pygame.Rect(140, 190, 210, 370),
         START_ROOM,
     ],
     6: [
         GOAL_ROOM,
-        pygame.Rect(200, 350, 560, 120),
-        pygame.Rect(200, 350, 160, 230),
+        pygame.Rect(120, 160, 640, 200),
+        pygame.Rect(120, 160, 240, 400),
         START_ROOM,
     ],
-    # Levels 7-10: two bends (a gentle S-shape) - more turns, but every
-    # corridor stays wide, so it's trickier without being a dead end maze.
+    # Level 7: widest the corridor maze gets before levels 8-10 open up
+    # into a full rectangle - one big bend, but clearly more open floor
+    # space than earlier levels while still not a rectangle (there's a
+    # missing top-left notch).
     7: [
         GOAL_ROOM,
-        pygame.Rect(400, 150, 360, 140),
-        pygame.Rect(400, 150, 160, 300),
-        pygame.Rect(140, 300, 400, 130),
-        pygame.Rect(140, 300, 180, 280),
+        pygame.Rect(100, 130, 660, 230),
+        pygame.Rect(100, 130, 270, 430),
         START_ROOM,
     ],
+    # Levels 8-10: the hard tier - one fully open rectangular arena
+    # (no corridors/bends at all) so mom's chasing obstacles have the
+    # whole floor to hunt across.
     8: [
-        GOAL_ROOM,
-        pygame.Rect(380, 150, 380, 130),
-        pygame.Rect(380, 150, 150, 350),
-        pygame.Rect(140, 350, 390, 120),
-        pygame.Rect(140, 350, 180, 230),
-        START_ROOM,
+        pygame.Rect(80, 90, 680, 490),
     ],
     9: [
-        GOAL_ROOM,
-        pygame.Rect(460, 140, 300, 140),
-        pygame.Rect(460, 140, 140, 300),
-        pygame.Rect(220, 320, 340, 110),
-        pygame.Rect(220, 320, 180, 260),
-        START_ROOM,
+        pygame.Rect(80, 90, 680, 490),
     ],
     10: [
-        GOAL_ROOM,
-        pygame.Rect(420, 130, 340, 130),
-        pygame.Rect(420, 130, 150, 320),
-        pygame.Rect(180, 280, 360, 120),
-        pygame.Rect(180, 280, 180, 300),
-        START_ROOM,
+        pygame.Rect(80, 90, 680, 490),
     ],
 }
 

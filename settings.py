@@ -54,12 +54,13 @@ RANDOM_OBSTACLE_SPEED = 2.8
 RANDOM_DIRECTION_CHANGE_MS = 1200  # how often it picks a new random direction
 
 # Multiplier applied to obstacle speeds per level (levels are 1-indexed).
-# Gentle, steady growth so level 10 is noticeably harder than level 1 but
-# still beatable - 1-2 easiest, 3-4 easy, climbing gradually from there.
+# 1-7 climb gently (capsicum + nanny only, growing corridor maze).
+# 8-10 jump up noticeably - the open rectangular arena with multiple
+# chasing moms is meant to be the hard tier.
 LEVEL_SPEED_SCALE = {
     1: 1.0, 2: 1.0, 3: 1.05, 4: 1.08,
-    5: 1.12, 6: 1.16, 7: 1.2, 8: 1.24,
-    9: 1.28, 10: 1.32,
+    5: 1.12, 6: 1.16, 7: 1.2,
+    8: 1.3, 9: 1.4, 10: 1.5,
 }
 
 # ---- Lives ----
