@@ -72,6 +72,9 @@ GAME_ZONE_BORDER_WIDTH = 4
 # ---- Level complete pause ----
 LEVEL_COMPLETE_PAUSE_MS = 1500
 
+# ---- Video paths ----
+VIDEO_START_SCREEN = "assets/videos/dance.mp4"
+
 # ---- Image paths ----
 IMAGE_START_SCREEN_CHARACTER = "assets/images/character.png"  # not supplied yet - placeholder shown until added
 IMAGE_PLAYER = "assets/images/shinchan.png"
@@ -80,15 +83,14 @@ IMAGE_CAPSICUM = "assets/images/capcicum.png"
 IMAGE_NANNY = "assets/images/nanny.jpg"
 IMAGE_MOM = "assets/images/misai.jpg"
 IMAGE_RANDOM_OBSTACLE = "assets/images/random_obstacle.png"  # not supplied yet - placeholder shown until added
-IMAGE_MEME_CAPSICUM = "assets/memes/capsicum_meme.png"  # not supplied yet - placeholder shown until added
+IMAGE_MEME_CAPSICUM = "assets/images/shinchan eating cap.png"
 IMAGE_MEME_MOM = "assets/images/misaiangry.jpg"
-IMAGE_MEME_NANNY = "assets/images/nands.jpg"
+IMAGE_MEME_NANNY = "assets/images/nanny on fire.png"
 
 # ---- Sound paths ----
-# theme_song.mp4 currently on disk is a broken placeholder (a failed
-# download, not real audio) - point MUSIC_THEME at it and swap in a real
-# .ogg/.mp3/.wav file whenever it's ready, no code changes needed.
-MUSIC_THEME = "assets/sounds/theme_song.mp4"
+MUSIC_THEME = "assets/sounds/theme_song.mp3"
+SOUND_START = "assets/sounds/Shinchan_balle_balle.mp3"
+SOUND_CAUGHT = "assets/sounds/sad_song.mp3"
 SOUND_HIT = "assets/sounds/hit.wav"
 SOUND_LEVEL_COMPLETE = "assets/sounds/level_complete.wav"
 SOUND_GAME_OVER = "assets/sounds/game_over.wav"

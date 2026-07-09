@@ -10,25 +10,26 @@ Controls:
 
 import os
 import sys
-import random
 import pygame
 
 from settings import (
     SCREEN_WIDTH, SCREEN_HEIGHT, FPS,
-    WHITE, BLACK, GREEN, RED,
+    WHITE, BLACK, GREEN, RED, YELLOW, GRAY,
     MAX_LIVES, LEVEL_COMPLETE_PAUSE_MS, LEVEL_START_INVULNERABLE_MS,
     PLAYER_SIZE, GOAL_SIZE, CAPSICUM_SIZE, NANNY_SIZE, MOM_SIZE, RANDOM_OBSTACLE_SIZE,
     OBSTACLE_SPAWN_SAFE_RADIUS,
+    VIDEO_START_SCREEN,
     IMAGE_START_SCREEN_CHARACTER, IMAGE_PLAYER, IMAGE_GOAL,
     IMAGE_CAPSICUM, IMAGE_NANNY, IMAGE_MOM, IMAGE_RANDOM_OBSTACLE,
     IMAGE_MEME_CAPSICUM, IMAGE_MEME_MOM, IMAGE_MEME_NANNY,
-    MUSIC_THEME, SOUND_HIT, SOUND_LEVEL_COMPLETE, SOUND_GAME_OVER,
+    SOUND_START, SOUND_CAUGHT, SOUND_HIT, SOUND_LEVEL_COMPLETE, SOUND_GAME_OVER,
     SOUND_WIN, SOUND_MEME,
 )
 import maze
 from player import Player
 from levels import build_goal, build_obstacles, TOTAL_LEVELS
 from sound_manager import SoundManager
+from video_player import VideoPlayer, extract_audio
 
 # ---- States ----
 STATE_START = "start"
@@ -37,27 +38,6 @@ STATE_MEME = "meme"
 STATE_LEVEL_COMPLETE = "level_complete"
 STATE_GAME_OVER = "game_over"
 STATE_ALL_COMPLETE = "all_complete"
-
-# Captions and placeholder image slots per obstacle type. Each hit
-# type gets its own little meme moment - swap the image paths in
-# settings.py once real pictures/gifs are ready.
-MEME_CAPTIONS = {
-    "capsicum": [
-        "Shinchan touches capsicum.\nShinchan regrets everything.",
-        "[ MEME PLACEHOLDER ]\nSwap this for your own image/gif.",
-        "Capsicum: 1   Shinchan: 0",
-        "Some things in life cannot be unseen.\nCapsicum is one of them.",
-    ],
-    "mom": [
-        "Caught by Mom.\nMisae is NOT happy right now.",
-        "Mom: 1   Shinchan: 0",
-    ],
-    "nanny": [
-        "[ MEME PLACEHOLDER ]\nNanny drags Shinchan off to play house-house.",
-        "Not the house-house game again...",
-    ],
-}
-
 
 class Game:
     def __init__(self):
@@ -76,6 +56,9 @@ class Game:
         self.sound_manager.load_sound("game_over", SOUND_GAME_OVER)
         self.sound_manager.load_sound("win", SOUND_WIN)
         self.sound_manager.load_sound("meme", SOUND_MEME)
+
+        self.start_video = VideoPlayer(VIDEO_START_SCREEN, (SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.start_video_audio = extract_audio(VIDEO_START_SCREEN)
 
         self.start_character_image = self.load_image_safe(
             IMAGE_START_SCREEN_CHARACTER, max_height=220
@@ -142,7 +125,8 @@ class Game:
         return image
 
     def start_music(self):
-        self.sound_manager.play_music(MUSIC_THEME)
+        if self.start_video_audio:
+            self.sound_manager.play_music(self.start_video_audio)
 
     # ---------------- INPUT ----------------
     def handle_input(self):
@@ -158,6 +142,7 @@ class Game:
                 if event.key == pygame.K_RETURN:
                     if self.state == STATE_START:
                         self.state = STATE_PLAYING
+                        self.sound_manager.play_music(SOUND_START)
                     elif self.state == STATE_MEME:
                         self.resolve_meme()
 
@@ -165,6 +150,7 @@ class Game:
                     if self.state in (STATE_GAME_OVER, STATE_ALL_COMPLETE):
                         self.full_reset()
                         self.state = STATE_START
+                        self.start_music()
 
         if self.state == STATE_PLAYING:
             keys = pygame.key.get_pressed()
@@ -173,6 +159,9 @@ class Game:
     # ---------------- UPDATE ----------------
     def update(self):
         current_time = pygame.time.get_ticks()
+
+        if self.state == STATE_START:
+            self.start_video.update(current_time)
 
         if self.state == STATE_PLAYING:
             self.goal.update()
@@ -196,11 +185,11 @@ class Game:
         for obstacle in self.obstacles:
             if self.player.rect.colliderect(obstacle.rect):
                 self.sound_manager.play("hit")
+                self.sound_manager.play_music(SOUND_CAUGHT)
                 if getattr(obstacle, "meme_on_hit", False):
                     self.state = STATE_MEME
                     meme_key = getattr(obstacle, "meme_key", "capsicum")
                     self.current_meme_key = meme_key
-                    self.current_meme_caption = random.choice(MEME_CAPTIONS[meme_key])
                     self.sound_manager.play("meme")
                 else:
                     self.apply_life_loss(current_time)
@@ -220,6 +209,7 @@ class Game:
         else:
             self.player.respawn(current_time)
             self.reposition_obstacles_away_from_player()
+            self.sound_manager.play_music(SOUND_START)
 
     def reposition_obstacles_away_from_player(self):
         """
@@ -280,17 +270,44 @@ class Game:
         pygame.display.flip()
 
     def draw_start_screen(self):
+        video_frame = self.start_video.get_surface()
+        if video_frame:
+            self.screen.blit(video_frame, (0, 0))
+
         if self.start_character_image:
             img_rect = self.start_character_image.get_rect(
                 center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 190)
             )
             self.screen.blit(self.start_character_image, img_rect)
-        self.draw_center_text("SHINCHAN ARENA RUNNER", self.font_big, BLACK, 0)
-        self.draw_center_text("Press ENTER to start", self.font_medium, BLACK, 60)
-        self.draw_center_text(
-            "Arrows or WASD to move  |  Reach Nanako, avoid everything else",
-            self.font_small, BLACK, 100
+
+        self.draw_outlined_text(
+            "SHINCHAN ARENA RUNNER", self.font_big, YELLOW, BLACK,
+            (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), outline_width=3,
         )
+
+        pulse = 200 + int(55 * abs((pygame.time.get_ticks() % 1000) / 500 - 1))
+        self.draw_outlined_text(
+            "Press ENTER to start", self.font_medium, (255, pulse, pulse), BLACK,
+            (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 60), outline_width=2,
+        )
+
+        hint_text = "Arrows or WASD to move  |  Reach Nanako, avoid everything else"
+        hint_surf = self.font_small.render(hint_text, True, WHITE)
+        hint_rect = hint_surf.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100))
+        pill_rect = hint_rect.inflate(28, 16)
+        pill = pygame.Surface(pill_rect.size, pygame.SRCALPHA)
+        pygame.draw.rect(pill, (0, 0, 0, 150), pill.get_rect(), border_radius=12)
+        self.screen.blit(pill, pill_rect)
+        self.screen.blit(hint_surf, hint_rect)
+
+    def draw_outlined_text(self, text, font, fill_color, outline_color, center, outline_width=2):
+        outline_surf = font.render(text, True, outline_color)
+        for dx in range(-outline_width, outline_width + 1):
+            for dy in range(-outline_width, outline_width + 1):
+                if dx or dy:
+                    self.screen.blit(outline_surf, outline_surf.get_rect(center=(center[0] + dx, center[1] + dy)))
+        fill_surf = font.render(text, True, fill_color)
+        self.screen.blit(fill_surf, fill_surf.get_rect(center=center))
 
     def draw_gameplay(self):
         maze.draw(self.screen)
@@ -308,29 +325,38 @@ class Game:
 
     def draw_meme_overlay(self):
         overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-        overlay.set_alpha(210)
+        overlay.set_alpha(220)
         overlay.fill(BLACK)
         self.screen.blit(overlay, (0, 0))
 
         meme_image = self.meme_images.get(self.current_meme_key)
+        card_center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 40)
+        content_size = meme_image.get_size() if meme_image else (300, 180)
+        card_rect = pygame.Rect(0, 0, content_size[0] + 48, content_size[1] + 48)
+        card_rect.center = card_center
+
+        shadow_rect = card_rect.copy()
+        shadow_rect.move_ip(6, 8)
+        pygame.draw.rect(self.screen, (0, 0, 0), shadow_rect, border_radius=18)
+        pygame.draw.rect(self.screen, GRAY, card_rect, border_radius=18)
+        pygame.draw.rect(self.screen, YELLOW, card_rect, width=4, border_radius=18)
+
         if meme_image:
-            img_rect = meme_image.get_rect(
-                center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 80)
-            )
+            img_rect = meme_image.get_rect(center=card_center)
             self.screen.blit(meme_image, img_rect)
         else:
-            placeholder_rect = pygame.Rect(0, 0, 300, 180)
-            placeholder_rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 100)
-            pygame.draw.rect(self.screen, WHITE, placeholder_rect, border_radius=10)
-            pygame.draw.rect(self.screen, BLACK, placeholder_rect, width=2, border_radius=10)
-            no_img_surf = self.font_small.render("[ meme image goes here ]", True, BLACK)
-            no_img_rect = no_img_surf.get_rect(center=placeholder_rect.center)
+            no_img_surf = self.font_small.render("[ meme image goes here ]", True, WHITE)
+            no_img_rect = no_img_surf.get_rect(center=card_center)
             self.screen.blit(no_img_surf, no_img_rect)
 
-        lines = self.current_meme_caption.split("\n")
-        for i, line in enumerate(lines):
-            self.draw_center_text(line, self.font_medium, WHITE, 100 + i * 32)
-        self.draw_center_text("Press ENTER to continue", self.font_small, WHITE, 180)
+        lives_text = f"Lives left: {self.lives}"
+        self.draw_center_text(lives_text, self.font_medium, YELLOW, card_rect.bottom - SCREEN_HEIGHT // 2 + 30)
+
+        pulse = 180 + int(60 * abs((pygame.time.get_ticks() % 1000) / 500 - 1))
+        self.draw_center_text(
+            "Press ENTER to continue", self.font_small, (pulse, pulse, pulse),
+            card_rect.bottom - SCREEN_HEIGHT // 2 + 65,
+        )
 
     def draw_center_text(self, text, font, color, y_offset):
         surf = font.render(text, True, color)

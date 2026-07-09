@@ -15,6 +15,9 @@ build/
 # Archives
 *.zip
 
+# Audio auto-extracted from video assets (regenerated on first run)
+assets/videos/*_audio.ogg
+
 # Editor / OS
 .vscode/
 .idea/
