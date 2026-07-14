@@ -9,12 +9,13 @@ Controls:
 """
 
 import os
+import random
 import sys
 import pygame
 
 from settings import (
     SCREEN_WIDTH, SCREEN_HEIGHT, FPS,
-    WHITE, BLACK, GREEN, RED, YELLOW, GRAY,
+    WHITE, BLACK, GREEN, RED, YELLOW, GRAY, ORANGE,
     MAX_LIVES, LEVEL_COMPLETE_PAUSE_MS, LEVEL_START_INVULNERABLE_MS,
     PLAYER_SIZE, GOAL_SIZE, CAPSICUM_SIZE, NANNY_SIZE, MOM_SIZE, RANDOM_OBSTACLE_SIZE,
     OBSTACLE_SPAWN_SAFE_RADIUS,
@@ -39,6 +40,22 @@ STATE_MEME = "meme"
 STATE_LEVEL_COMPLETE = "level_complete"
 STATE_GAME_OVER = "game_over"
 STATE_ALL_COMPLETE = "all_complete"
+
+
+def hit_rect(rect, shrink=0.7):
+    """
+    A shrunk, center-matched copy of rect used only for entity-vs-entity
+    collision (player vs obstacle/goal) — sprite images are square bounding
+    boxes around characters that don't fill every corner (round faces,
+    transparent padding from background removal), so colliding on the full
+    rect registers a hit well before the art actually looks like it touched.
+    """
+    w = int(rect.width * shrink)
+    h = int(rect.height * shrink)
+    shrunk = pygame.Rect(0, 0, w, h)
+    shrunk.center = rect.center
+    return shrunk
+
 
 class Game:
     def __init__(self):
@@ -71,6 +88,11 @@ class Game:
         # Mom's meme is a looping video instead of a static image. No audio is
         # ever extracted/played for it, so it's silent (muted) by design.
         self.meme_mom_video = VideoPlayer(VIDEO_MEME_MOM, max_height=250)
+
+        # "Skill issue" spam that pops up staggered in time across the whole
+        # screen whenever a meme is triggered (see generate_skill_issue_bursts).
+        self.meme_start_time = 0
+        self.skill_issue_bursts = []
         self.game_over_image = self.load_image_cover(
             IMAGE_GAME_OVER_CHARACTER, (SCREEN_WIDTH, SCREEN_HEIGHT)
         )
@@ -198,7 +220,7 @@ class Game:
             if not self.player.is_invulnerable(current_time):
                 self.check_collisions(current_time)
 
-            if self.player.rect.colliderect(self.goal.rect):
+            if hit_rect(self.player.rect).colliderect(hit_rect(self.goal.rect)):
                 self.on_level_complete(current_time)
 
         elif self.state == STATE_LEVEL_COMPLETE:
@@ -206,18 +228,51 @@ class Game:
                 self.advance_level()
 
     def check_collisions(self, current_time):
+        player_hitbox = hit_rect(self.player.rect)
         for obstacle in self.obstacles:
-            if self.player.rect.colliderect(obstacle.rect):
+            if player_hitbox.colliderect(hit_rect(obstacle.rect)):
                 self.sound_manager.play("hit")
                 self.sound_manager.play_music(SOUND_CAUGHT)
                 if getattr(obstacle, "meme_on_hit", False):
                     self.state = STATE_MEME
                     meme_key = getattr(obstacle, "meme_key", "capsicum")
                     self.current_meme_key = meme_key
+                    self.meme_start_time = current_time
+                    self.skill_issue_bursts = self.generate_skill_issue_bursts()
                     self.sound_manager.play("meme")
                 else:
                     self.apply_life_loss(current_time)
                 return  # only process one hit per frame
+
+    def generate_skill_issue_bursts(self):
+        """Build a "Skill issue" spam burst that covers the whole screen with
+        no awkward empty gaps: the screen is split into a jittered grid so
+        every region gets at least one, each with its own size/color and a
+        staggered millisecond delay so they pop in one after another instead
+        of all at once."""
+        colors = [RED, YELLOW, GREEN, ORANGE, WHITE]
+        cols, rows = 7, 6
+        cell_w = SCREEN_WIDTH / cols
+        cell_h = SCREEN_HEIGHT / rows
+
+        cells = [(c, r) for c in range(cols) for r in range(rows)]
+        random.shuffle(cells)
+
+        bursts = []
+        delay = 0
+        for c, r in cells:
+            delay += random.randint(35, 70)
+            size = random.randint(22, 44)
+            pad_x, pad_y = cell_w * 0.2, cell_h * 0.2
+            x = int(c * cell_w + random.uniform(pad_x, cell_w - pad_x))
+            y = int(r * cell_h + random.uniform(pad_y, cell_h - pad_y))
+            bursts.append({
+                "delay": delay,
+                "font": pygame.font.SysFont(None, size, bold=True),
+                "pos": (x, y),
+                "color": random.choice(colors),
+            })
+        return bursts
 
     def resolve_meme(self):
         current_time = pygame.time.get_ticks()
@@ -387,6 +442,13 @@ class Game:
             "Press ENTER to continue", self.font_small, (pulse, pulse, pulse),
             content_bottom - SCREEN_HEIGHT // 2 + 65,
         )
+
+        elapsed = pygame.time.get_ticks() - self.meme_start_time
+        for burst in self.skill_issue_bursts:
+            if elapsed >= burst["delay"]:
+                self.draw_outlined_text(
+                    "Skill issue", burst["font"], burst["color"], BLACK, burst["pos"], outline_width=2
+                )
 
     def draw_center_text(self, text, font, color, y_offset):
         surf = font.render(text, True, color)
