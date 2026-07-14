@@ -22,6 +22,7 @@ from settings import (
     IMAGE_START_SCREEN_CHARACTER, IMAGE_PLAYER, IMAGE_GOAL,
     IMAGE_CAPSICUM, IMAGE_NANNY, IMAGE_MOM, IMAGE_RANDOM_OBSTACLE,
     IMAGE_MEME_CAPSICUM, IMAGE_MEME_MOM, IMAGE_MEME_NANNY,
+    IMAGE_GAME_OVER_CHARACTER,
     SOUND_START, SOUND_CAUGHT, SOUND_HIT, SOUND_LEVEL_COMPLETE, SOUND_GAME_OVER,
     SOUND_WIN, SOUND_MEME,
 )
@@ -68,6 +69,9 @@ class Game:
             "mom": self.load_image_safe(IMAGE_MEME_MOM, max_height=250),
             "nanny": self.load_image_safe(IMAGE_MEME_NANNY, max_height=250),
         }
+        self.game_over_image = self.load_image_cover(
+            IMAGE_GAME_OVER_CHARACTER, (SCREEN_WIDTH, SCREEN_HEIGHT)
+        )
 
         # Sprite images shared by all levels (loaded once, scaled to
         # match each entity's actual hitbox size)
@@ -123,6 +127,21 @@ class Game:
             new_size = (int(image.get_width() * scale), max_height)
             image = pygame.transform.smoothscale(image, new_size)
         return image
+
+    def load_image_cover(self, path, target_size):
+        """Load an image scaled and center-cropped to fully cover target_size
+        (like CSS background-size: cover), preserving its aspect ratio."""
+        if not os.path.exists(path):
+            print(f"[image] '{path}' not found — using placeholder shape instead.")
+            return None
+        image = pygame.image.load(path).convert_alpha()
+        target_w, target_h = target_size
+        scale = max(target_w / image.get_width(), target_h / image.get_height())
+        new_size = (int(image.get_width() * scale) + 1, int(image.get_height() * scale) + 1)
+        image = pygame.transform.smoothscale(image, new_size)
+        crop_x = (new_size[0] - target_w) // 2
+        crop_y = (new_size[1] - target_h) // 2
+        return image.subsurface(pygame.Rect(crop_x, crop_y, target_w, target_h)).copy()
 
     def start_music(self):
         if self.start_video_audio:
@@ -257,11 +276,21 @@ class Game:
                     f"Level {self.level_number} Complete!", self.font_big, GREEN, 0
                 )
         elif self.state == STATE_GAME_OVER:
-            self.draw_center_text("GAME OVER", self.font_big, RED, -30)
+            if self.game_over_image:
+                self.screen.blit(self.game_over_image, (0, 0))
+            else:
+                self.screen.fill(BLACK)
+
+            strip_rect = pygame.Rect(0, SCREEN_HEIGHT // 2 - 60, SCREEN_WIDTH, 140)
+            strip = pygame.Surface(strip_rect.size, pygame.SRCALPHA)
+            strip.fill((0, 0, 0, 165))
+            self.screen.blit(strip, strip_rect)
+
+            self.draw_center_text("GAME OVER", self.font_big, WHITE, -30)
             self.draw_center_text(
-                f"Reached Level {self.level_number}", self.font_medium, BLACK, 20
+                f"Reached Level {self.level_number}", self.font_medium, WHITE, 20
             )
-            self.draw_center_text("Press R to restart", self.font_medium, BLACK, 60)
+            self.draw_center_text("Press R to restart", self.font_medium, WHITE, 60)
         elif self.state == STATE_ALL_COMPLETE:
             self.draw_center_text("YOU REACHED NANAKO!", self.font_big, GREEN, -30)
             self.draw_center_text(f"You beat all {TOTAL_LEVELS} levels!", self.font_medium, BLACK, 20)
@@ -332,14 +361,7 @@ class Game:
         meme_image = self.meme_images.get(self.current_meme_key)
         card_center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 40)
         content_size = meme_image.get_size() if meme_image else (300, 180)
-        card_rect = pygame.Rect(0, 0, content_size[0] + 48, content_size[1] + 48)
-        card_rect.center = card_center
-
-        shadow_rect = card_rect.copy()
-        shadow_rect.move_ip(6, 8)
-        pygame.draw.rect(self.screen, (0, 0, 0), shadow_rect, border_radius=18)
-        pygame.draw.rect(self.screen, GRAY, card_rect, border_radius=18)
-        pygame.draw.rect(self.screen, YELLOW, card_rect, width=4, border_radius=18)
+        content_bottom = card_center[1] + content_size[1] // 2
 
         if meme_image:
             img_rect = meme_image.get_rect(center=card_center)
@@ -350,12 +372,12 @@ class Game:
             self.screen.blit(no_img_surf, no_img_rect)
 
         lives_text = f"Lives left: {self.lives}"
-        self.draw_center_text(lives_text, self.font_medium, YELLOW, card_rect.bottom - SCREEN_HEIGHT // 2 + 30)
+        self.draw_center_text(lives_text, self.font_medium, YELLOW, content_bottom - SCREEN_HEIGHT // 2 + 30)
 
         pulse = 180 + int(60 * abs((pygame.time.get_ticks() % 1000) / 500 - 1))
         self.draw_center_text(
             "Press ENTER to continue", self.font_small, (pulse, pulse, pulse),
-            card_rect.bottom - SCREEN_HEIGHT // 2 + 65,
+            content_bottom - SCREEN_HEIGHT // 2 + 65,
         )
 
     def draw_center_text(self, text, font, color, y_offset):

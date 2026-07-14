@@ -28,7 +28,7 @@ PLAYER_SPEED = 4
 PLAYER_START_X = 200   # starts in the alcove, bottom-left
 PLAYER_START_Y = 510
 PLAYER_INVULNERABLE_MS = 1200  # brief safety window after a mid-level respawn
-LEVEL_START_INVULNERABLE_MS = 2000  # longer safety window right as a level begins
+LEVEL_START_INVULNERABLE_MS = 600  # short safety window right as a level begins
 OBSTACLE_SPAWN_SAFE_RADIUS = 150  # obstacles won't spawn this close to the player's start
 
 # ---- Goal (Nanako) ----
@@ -79,14 +79,15 @@ VIDEO_START_SCREEN = "assets/videos/dance.mp4"
 # ---- Image paths ----
 IMAGE_START_SCREEN_CHARACTER = "assets/images/character.png"  # not supplied yet - placeholder shown until added
 IMAGE_PLAYER = "assets/images/shinchan.png"
-IMAGE_GOAL = "assets/images/nanako.jpg"
+IMAGE_GOAL = "assets/images/nanako.png"
 IMAGE_CAPSICUM = "assets/images/capcicum.png"
-IMAGE_NANNY = "assets/images/nanny.jpg"
-IMAGE_MOM = "assets/images/misai.jpg"
+IMAGE_NANNY = "assets/images/nanny.png"
+IMAGE_MOM = "assets/images/misai.png"
 IMAGE_RANDOM_OBSTACLE = "assets/images/random_obstacle.png"  # not supplied yet - placeholder shown until added
 IMAGE_MEME_CAPSICUM = "assets/images/shinchan eating cap.png"
 IMAGE_MEME_MOM = "assets/images/misaiangry.jpg"
 IMAGE_MEME_NANNY = "assets/images/nanny on fire.png"
+IMAGE_GAME_OVER_CHARACTER = "assets/images/sad_shinchan.jpg"
 
 # ---- Sound paths ----
 MUSIC_THEME = "assets/sounds/theme_song.mp3"
