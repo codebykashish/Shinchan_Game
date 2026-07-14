@@ -34,8 +34,7 @@ class VideoPlayer:
     forever. pygame itself has no video codec, so this is the bridge.
     """
 
-    def __init__(self, path, size):
-        self.size = size
+    def __init__(self, path, size=None, max_height=None):
         self.cap = None
         self.frame_delay_ms = 1000 / 30
         self.next_frame_time = 0
@@ -45,7 +44,17 @@ class VideoPlayer:
             self.cap = cv2.VideoCapture(path)
             fps = self.cap.get(cv2.CAP_PROP_FPS) or 30
             self.frame_delay_ms = 1000 / fps
+
+            if size is not None:
+                self.size = size
+            else:
+                # Scale to max_height while preserving the source's aspect ratio.
+                native_w = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) or max_height
+                native_h = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) or max_height
+                scale = max_height / native_h
+                self.size = (max(1, int(native_w * scale)), max_height)
         else:
+            self.size = size or (max_height, max_height)
             print(f"[video] '{path}' not found — start screen will show a plain background instead.")
 
     def update(self, current_time_ms):

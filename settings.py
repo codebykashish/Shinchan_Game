@@ -75,6 +75,7 @@ LEVEL_COMPLETE_PAUSE_MS = 1500
 
 # ---- Video paths ----
 VIDEO_START_SCREEN = "assets/videos/dance.mp4"
+VIDEO_MEME_MOM = "assets/videos/shinchan_danger.mp4"  # played muted on the mom meme screen
 
 # ---- Image paths ----
 IMAGE_START_SCREEN_CHARACTER = "assets/images/character.png"  # not supplied yet - placeholder shown until added
