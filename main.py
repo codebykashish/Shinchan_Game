@@ -19,10 +19,10 @@ from settings import (
     MAX_LIVES, LEVEL_COMPLETE_PAUSE_MS, LEVEL_START_INVULNERABLE_MS,
     PLAYER_SIZE, GOAL_SIZE, CAPSICUM_SIZE, NANNY_SIZE, MOM_SIZE, RANDOM_OBSTACLE_SIZE,
     OBSTACLE_SPAWN_SAFE_RADIUS,
-    VIDEO_START_SCREEN, VIDEO_MEME_MOM,
+    VIDEO_START_SCREEN,
     IMAGE_START_SCREEN_CHARACTER, IMAGE_PLAYER, IMAGE_GOAL,
     IMAGE_CAPSICUM, IMAGE_NANNY, IMAGE_MOM, IMAGE_RANDOM_OBSTACLE,
-    IMAGE_MEME_CAPSICUM, IMAGE_MEME_NANNY,
+    IMAGE_MEME_CAPSICUM, IMAGE_MEME_MOM, IMAGE_MEME_NANNY,
     IMAGE_GAME_OVER_CHARACTER,
     SOUND_START, SOUND_CAUGHT, SOUND_HIT, SOUND_LEVEL_COMPLETE, SOUND_GAME_OVER,
     SOUND_WIN, SOUND_MEME,
@@ -83,11 +83,9 @@ class Game:
         )
         self.meme_images = {
             "capsicum": self.load_image_safe(IMAGE_MEME_CAPSICUM, max_height=250),
+            "mom": self.load_image_safe(IMAGE_MEME_MOM, max_height=250),
             "nanny": self.load_image_safe(IMAGE_MEME_NANNY, max_height=250),
         }
-        # Mom's meme is a looping video instead of a static image. No audio is
-        # ever extracted/played for it, so it's silent (muted) by design.
-        self.meme_mom_video = VideoPlayer(VIDEO_MEME_MOM, max_height=250)
 
         # "Skill issue" spam that pops up staggered in time across the whole
         # screen whenever a meme is triggered (see generate_skill_issue_bursts).
@@ -205,9 +203,6 @@ class Game:
 
         if self.state == STATE_START:
             self.start_video.update(current_time)
-
-        if self.state == STATE_MEME and self.current_meme_key == "mom":
-            self.meme_mom_video.update(current_time)
 
         if self.state == STATE_PLAYING:
             self.goal.update()
@@ -418,10 +413,7 @@ class Game:
         overlay.fill(BLACK)
         self.screen.blit(overlay, (0, 0))
 
-        if self.current_meme_key == "mom":
-            meme_image = self.meme_mom_video.get_surface()
-        else:
-            meme_image = self.meme_images.get(self.current_meme_key)
+        meme_image = self.meme_images.get(self.current_meme_key)
         card_center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 40)
         content_size = meme_image.get_size() if meme_image else (300, 180)
         content_bottom = card_center[1] + content_size[1] // 2
